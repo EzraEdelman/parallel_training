@@ -77,7 +77,7 @@ def train_step(models, opt_states, data, lrs, criterion, key, num_seeds):
     def train_seed(model, key, data):
         X, y = data
         def loss_fn(model):
-            y_pred = eqx.filter_vmap(model, in_axes=(0,None))(X, key)[..., -1, :]
+            y_pred = eqx.filter_vmap(model, in_axes=(0,None))(X, key)
             return criterion(y_pred, y), y_pred
         # Further split keys for each LR
         (loss, logits), grads = jax.vmap(eqx.filter_value_and_grad(loss_fn, has_aux=True))(model)
@@ -106,7 +106,7 @@ def train_step(models, opt_states, data, lrs, criterion, key, num_seeds):
 def eval_step(model, data, criterion):
     """Eval step for a single model - returns metrics"""
     X, y = data
-    logits = jax.vmap(model, in_axes=(0,None))(X, None)[..., -1, :]
+    logits = jax.vmap(model, in_axes=(0,None))(X, None)
     loss = criterion(logits, y)
     metrics = compute_metrics(logits, y, loss)
     return metrics

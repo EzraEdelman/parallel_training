@@ -67,13 +67,13 @@ def train(train_config: TrainConfig):
             # Record best metrics
             metrics_history['test_loss'].append(test_loss.mean(axis=0).min())
             metrics_history['test_accuracy'].append(test_acc.mean(axis=0).max())
-            pbar.set_postfix(train_acc=metrics_history['train_accuracy'][-1], test_acc=metrics_history['test_accuracy'][-1])
+            pbar.set_postfix(train_acc=f"{metrics_history['train_accuracy'][-1]:.2f}", test_acc=f"{metrics_history['test_accuracy'][-1]:.2f}")
     return metrics_history
 
 
 
 if __name__ == "__main__":
-    dataset_config = Parity.config(d=20, k=6)
+    dataset_config = Parity.config(d=20, k=3)
 
     # model_config = Transformer.config(
     #     vocab_size=2,
@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
     config = TrainConfig(
         lrs=jnp.geomspace(1e-4, 1e-1, 10),
-        num_seeds=20,
+        num_seeds=50,
         criterion=lambda y_pred, y: optax.softmax_cross_entropy_with_integer_labels(y_pred, y).mean(),
         model=Transformer,
         trainset_size = -1,

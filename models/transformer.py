@@ -69,7 +69,9 @@ class DecoderBlock(eqx.Module):
         
         return x
 
-
+"""
+outputs logits for last token only!
+"""
 class Transformer(eqx.Module):
     embeddings: eqx.nn.Embedding
     pos_embeddings: eqx.nn.Embedding
@@ -113,30 +115,13 @@ class Transformer(eqx.Module):
         pos_emb = jax.vmap(self.pos_embeddings)(positions)
         x = x + pos_emb
         
-        # # Pass through decoder blocks
-        # if key is not None:
-        #     keys = jr.split(key, self.num_layers)
-        # else:
-        #     keys = [None] * self.num_layers
-        # print(x.shape)
-        # for layer, layer_key in zip(self.layers, keys):
-        #     x = layer(x, key=layer_key)
         for layer in self.layers:
             x = layer(x)
-        # dynamic_layers, static_layers = eqx.partition(self.layers, eqx.is_array)
-
-        # def f(_x, _dynamic_layers):
-        #     layers = eqx.combine(_dynamic_layers, static_layers)
-        #     return layers(_x), None
-            
         
-        # x, _ = jax.lax.scan(f, x, dynamic_layers)
-
-        # Final layer norm and prediction head
         x = jax.vmap(self.layer_norm)(x)
         x = jax.vmap(self.lm_head)(x)
         
-        return x
+        return x[-1]
 
 
 @dataclasses.dataclass
