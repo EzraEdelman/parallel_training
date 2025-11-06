@@ -6,15 +6,14 @@ import jax
 import jax.random as jr
 from functools import partial
 from tqdm.auto import tqdm
-from typing import Any, Callable
+from typing import Any, Callable, NamedTuple
 import dataclasses
 from models.transformer import Transformer
 from datasets.parity import Parity
 from jax_tqdm import scan_tqdm
 
 
-@dataclasses.dataclass(unsafe_hash=True)
-class TrainConfig:
+class TrainConfig(NamedTuple):
     lrs: jax.Array
     num_seeds: int
     criterion: Callable
@@ -22,13 +21,11 @@ class TrainConfig:
     dataset: type
     model_config: Any = None
     num_steps: int = 5000
-    rng_key: jax.Array = dataclasses.field(default_factory=lambda: jr.PRNGKey(0))
     batch_size: int = 32
     trainset_size: int = -1 # -1 for online dataset
     dataset_config: Any = None
+    rng_key: jax.Array = jr.PRNGKey(0)
 
-    def replace(self, **kwargs):
-        return dataclasses.replace(self, **kwargs)
 
 
 def compute_metrics(logits, labels, loss):

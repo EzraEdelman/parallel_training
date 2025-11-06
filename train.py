@@ -73,7 +73,7 @@ def train(train_config: TrainConfig):
 
 
 if __name__ == "__main__":
-    dataset_config = Parity.config(d=20, k=3)
+    dataset_config = Parity.config(d=20, k=6, zero_one=True)
 
     # model_config = Transformer.config(
     #     vocab_size=2,
@@ -88,17 +88,17 @@ if __name__ == "__main__":
     model_config = Transformer.config(
         vocab_size=2,
         max_len=dataset_config.d,
-        embd_dim=16,
-        mlp_dim=64,
-        qkv_dim=16,
-        num_heads=3,
+        embd_dim=256,
+        mlp_dim=1024,
+        qkv_dim=256,
+        num_heads=8,
         num_layers=2,
         dtype=jnp.float32
     )
 
     config = TrainConfig(
         lrs=jnp.geomspace(1e-4, 1e-1, 10),
-        num_seeds=50,
+        num_seeds=10,
         criterion=lambda y_pred, y: optax.softmax_cross_entropy_with_integer_labels(y_pred, y).mean(),
         model=Transformer,
         trainset_size = -1,
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     )
 
     online_metrics_history = train(config)
-    offline_config = config.replace(trainset_size=5000)
+    offline_config = config._replace(trainset_size=5000)
     offline_metrics_history = train(offline_config)
 
     metrics = {"online": online_metrics_history, "offline": offline_metrics_history, }

@@ -3,34 +3,27 @@ import jax
 from functools import partial
 import jax.numpy as jnp
 import jax.random as jr
-from typing import Tuple
-import dataclasses
+from typing import Tuple, NamedTuple
 
 
-@dataclasses.dataclass(unsafe_hash=True)
-class ParityConfig:
+class ParityConfig(NamedTuple):
     d: int = 10
     k: int = 2
     dtype: jnp.dtype = jnp.int32
-    zero_one: bool = True
-
-    def replace(self, **kwargs):
-        return dataclasses.replace(self, **kwargs)
-
+    zero_one: bool = False
 
 class Parity:
-    def __init__(self, config: ParityConfig):
-        self.d = config.d
-        self.k = config.k
-        self.dtype = config.dtype
-        self.zero_one = config.zero_one
-        self.create_batch = None
+    def __init__(self, d=10, k=2, dtype=jnp.int32, zero_one=False):
+        self.d = d
+        self.k = k
+        self.dtype = dtype
+        self.zero_one = zero_one 
 
         if not self.zero_one:
-            self.cretea_batch = lambda *args: self.create_batch(*args) * 2 - 1
+            self.real_create_batch = lambda *args: self._create_batch(*args) * 2 - 1
             self.evaluate_parity = lambda x: jnp.prod(x, axis=-1)
         else:
-            self.create_batch = self._create_batch
+            self.real_create_batch = lambda *args: self._create_batch(*args)
             self.evaluate_parity = lambda x: jnp.sum(x[..., :self.k], axis=-1) % 2
 
     
@@ -44,6 +37,11 @@ class Parity:
         y = self.evaluate_parity(X).astype(self.dtype)
         return X, y
     
+    def create_batch(self, key, n: int) -> Tuple[jnp.ndarray, jnp.ndarray]:
+        return self.real_create_batch(key, n)
+    
+
+
     # @partial(jax.jit, static_argnums=(2,3))
     def create_batches(self, key, n: int, num_seeds: int) -> Tuple[jnp.ndarray, jnp.ndarray]:
         """Create batches for multiple seeds"""
